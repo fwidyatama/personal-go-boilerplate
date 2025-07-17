@@ -1,0 +1,1027 @@
+openapi: 3.0.3
+info:
+  title: Microservice Boilerplate API
+  description: A production-ready microservice boilerplate with Clean Architecture
+  version: 1.0.0
+  contact:
+    name: API Support
+    url: http://www.swagger.io/support
+    email: support@swagger.io
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+  - url: https://api.example.com
+    description: Production server
+
+paths:
+  /api/v1/auth/register:
+    post:
+      summary: Register a new user
+      description: Register a new user account
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: User with email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/auth/login:
+    post:
+      summary: Login user
+      description: Authenticate user and return access token
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/auth/refresh:
+    post:
+      summary: Refresh access token
+      description: Get new access token using refresh token
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/auth/logout:
+    post:
+      summary: Logout user
+      description: Invalidate refresh token and logout user
+      tags:
+        - Authentication
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/auth/forgot-password:
+    post:
+      summary: Request password reset
+      description: Send a password reset email to the user
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequest'
+      responses:
+        '200':
+          description: Password reset email sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/auth/reset-password:
+    post:
+      summary: Reset password
+      description: Reset user password using a valid reset token
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+      responses:
+        '200':
+          description: Password reset successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/auth/change-password:
+    put:
+      summary: Change password
+      description: Change password for authenticated user
+      tags:
+        - Authentication
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          description: Password changed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Current password incorrect
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/health:
+    get:
+      summary: Health check
+      description: Check the health status of the application and its dependencies
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Application is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '503':
+          description: Application is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  /api/v1/metrics:
+    get:
+      summary: Get metrics
+      description: Get application metrics in Prometheus format
+      tags:
+        - Monitoring
+      responses:
+        '200':
+          description: Metrics retrieved successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /api/v1/users:
+    get:
+      summary: List users
+      description: Retrieve a list of users with pagination
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: "Number of users to return (default: 10, max: 100)"
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - name: offset
+          in: query
+          description: "Number of users to skip (default: 0)"
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Users retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Create user
+      description: Create a new user with the provided information
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: User with email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/users/{id}:
+    get:
+      summary: Get user by ID
+      description: Retrieve a user by their ID
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: User ID (UUID)
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update user
+      description: Update an existing user's information
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: User ID (UUID)
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: User with email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete user
+      description: Delete a user by their ID
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: User ID (UUID)
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: User deleted successfully
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/users/me:
+    get:
+      summary: Get current user profile
+      description: Retrieve the profile of the currently authenticated user
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: User ID
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        name:
+          type: string
+          description: User's full name
+          minLength: 2
+          maxLength: 100
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "john@example.com"
+        password:
+          type: string
+          description: User's password (hashed)
+          minLength: 6
+          writeOnly: true
+          example: "hashed_password"
+        is_active:
+          type: boolean
+          description: Whether the user account is active
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          description: User creation timestamp
+          example: "2023-01-01T00:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: User last update timestamp
+          example: "2023-01-01T00:00:00Z"
+      required:
+        - name
+        - email
+        - password
+
+    RegisterRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: User's full name
+          minLength: 2
+          maxLength: 100
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "john@example.com"
+        password:
+          type: string
+          description: User's password
+          minLength: 6
+          example: "password123"
+      required:
+        - name
+        - email
+        - password
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "john@example.com"
+        password:
+          type: string
+          description: User's password
+          minLength: 6
+          example: "password123"
+      required:
+        - email
+        - password
+
+    RefreshRequest:
+      type: object
+      properties:
+        refresh_token:
+          type: string
+          description: Refresh token
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      required:
+        - refresh_token
+
+    CreateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: User's full name
+          minLength: 2
+          maxLength: 100
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "john@example.com"
+        password:
+          type: string
+          description: User's password
+          minLength: 6
+          example: "password123"
+      required:
+        - name
+        - email
+        - password
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: User's full name
+          minLength: 2
+          maxLength: 100
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "john@example.com"
+        password:
+          type: string
+          description: User's password
+          minLength: 6
+          example: "password123"
+      required:
+        - name
+        - email
+        - password
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: User ID
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        name:
+          type: string
+          description: User's full name
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "john@example.com"
+        is_active:
+          type: boolean
+          description: Whether the user account is active
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          description: User creation timestamp
+          example: "2023-01-01T00:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: User last update timestamp
+          example: "2023-01-01T00:00:00Z"
+
+    AuthResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: JWT access token
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        refresh_token:
+          type: string
+          description: Refresh token
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        token_type:
+          type: string
+          description: Token type
+          example: "Bearer"
+        expires_in:
+          type: integer
+          description: Token expiration time in seconds
+          example: 900
+        user:
+          $ref: '#/components/schemas/UserResponse'
+
+    UserListResponse:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserResponse'
+          description: List of users
+
+    PaginationInfo:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        limit:
+          type: integer
+          description: Number of items per page
+          example: 10
+        total:
+          type: integer
+          description: Total number of items
+          example: 100
+        total_pages:
+          type: integer
+          description: Total number of pages
+          example: 10
+        has_next:
+          type: boolean
+          description: Whether there is a next page
+          example: true
+        has_prev:
+          type: boolean
+          description: Whether there is a previous page
+          example: false
+
+    PaginatedUserResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the operation was successful
+          example: true
+        message:
+          type: string
+          description: Response message
+          example: "Users retrieved successfully"
+        data:
+          $ref: '#/components/schemas/UserListResponse'
+        code:
+          type: integer
+          description: HTTP status code
+          example: 200
+        timestamp:
+          type: string
+          format: date-time
+          description: Response timestamp
+          example: "2023-01-01T00:00:00Z"
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
+
+    StandardResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the operation was successful
+          example: true
+        message:
+          type: string
+          description: Response message
+          example: "Operation completed successfully"
+        data:
+          oneOf:
+            - $ref: '#/components/schemas/UserResponse'
+            - $ref: '#/components/schemas/UserListResponse'
+            - $ref: '#/components/schemas/PaginatedUserResponse'
+            - $ref: '#/components/schemas/HealthData'
+            - $ref: '#/components/schemas/AuthResponse'
+          description: Response data (varies by endpoint)
+        error:
+          type: string
+          description: Error type (only present on errors)
+          example: "Bad Request"
+        code:
+          type: integer
+          description: HTTP status code
+          example: 200
+        timestamp:
+          type: string
+          format: date-time
+          description: Response timestamp
+          example: "2023-01-01T00:00:00Z"
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the operation was successful
+          example: false
+        message:
+          type: string
+          description: Error message
+          example: "Invalid request body"
+        error:
+          type: string
+          description: Error type
+          example: "Bad Request"
+        code:
+          type: integer
+          description: HTTP status code
+          example: 400
+        timestamp:
+          type: string
+          format: date-time
+          description: Response timestamp
+          example: "2023-01-01T00:00:00Z"
+
+    HealthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the operation was successful
+          example: true
+        message:
+          type: string
+          description: Response message
+          example: "Health check completed"
+        data:
+          $ref: '#/components/schemas/HealthData'
+        code:
+          type: integer
+          description: HTTP status code
+          example: 200
+        timestamp:
+          type: string
+          format: date-time
+          description: Response timestamp
+          example: "2023-01-01T00:00:00Z"
+
+    HealthData:
+      type: object
+      properties:
+        status:
+          type: string
+          description: Overall health status
+          example: "healthy"
+        services:
+          type: object
+          additionalProperties:
+            type: string
+          description: Health status of individual services
+          example:
+            database: "healthy"
+            redis: "healthy"
+            kafka: "healthy"
+        version:
+          type: string
+          description: Application version
+          example: "1.0.0"
+
+    ForgotPasswordRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "john@example.com"
+      required:
+        - email
+
+    ResetPasswordRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "john@example.com"
+        token:
+          type: string
+          description: Password reset token
+          example: "reset-token-123"
+        new_password:
+          type: string
+          description: New password
+          minLength: 8
+          example: "NewPassword123!"
+      required:
+        - email
+        - token
+        - new_password
+
+    ChangePasswordRequest:
+      type: object
+      properties:
+        current_password:
+          type: string
+          description: Current password
+          example: "OldPassword123!"
+        new_password:
+          type: string
+          description: New password
+          minLength: 8
+          example: "NewPassword123!"
+      required:
+        - current_password
+        - new_password
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Type "Bearer" followed by a space and JWT token
+
+tags:
+  - name: Authentication
+    description: Authentication operations
+  - name: Users
+    description: User management operations
+  - name: Health
+    description: Health check operations
+  - name: Monitoring
+    description: Monitoring and metrics operations 

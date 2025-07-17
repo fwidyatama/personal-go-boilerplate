@@ -1,0 +1,5 @@
+package: types
+generate:
+  gin-server: true
+  models: true
+output: ./internal/types/types.go

@@ -14,7 +14,7 @@ func RegisterRoutes(router *gin.Engine, reg *registry.AppRegistry) {
 
 	api := router.Group("/api/v1")
 	{
-		users := api.Group("/users")
+		users := api.Group("	/users")
 		users.Use(middleware.AuthMiddleware(reg.Auth, reg.Redis))
 		{
 			users.POST("/", reg.Handlers.UserHandler.Create)

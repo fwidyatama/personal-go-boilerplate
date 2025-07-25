@@ -32,7 +32,7 @@ var _ = Describe("UserRepository", func() {
 	})
 
 	AfterEach(func() {
-		db.Close()
+		_ = db.Close()
 	})
 
 	It("should create a user", func() {

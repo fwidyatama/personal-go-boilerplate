@@ -18,25 +18,17 @@ func RegisterRoutes(router *gin.Engine, reg *registry.AppRegistry) {
 	// Add request size limit (10MB)
 	router.Use(middleware.RequestSizeMiddleware(10 << 20))
 
-	// Rate limit configurations
-	rateLimitConfigs := middleware.CreateRateLimitConfigs()
-
 	router.Static("/swagger-ui/", "./swagger-ui")
 	router.StaticFile("/swagger/openapi.yaml", "./docs/openapi.yaml")
 
 	api := router.Group("/api/v1")
 	{
-		// Public endpoints with rate limiting
-		api.GET("/health",
-			middleware.RateLimitMiddleware(reg.Redis, rateLimitConfigs["public"]),
-			handler.HealthCheck(reg.DB))
-		api.GET("/metrics",
-			middleware.RateLimitMiddleware(reg.Redis, rateLimitConfigs["public"]),
-			handler.MetricsHandler())
+		// Public endpoints
+		api.GET("/health", handler.HealthCheck(reg.DB))
+		api.GET("/metrics", handler.MetricsHandler())
 
-		// Auth endpoints with stricter rate limiting
+		// Auth endpoints
 		auth := api.Group("/auth")
-		auth.Use(middleware.RateLimitMiddleware(reg.Redis, rateLimitConfigs["auth"]))
 		{
 			auth.POST("/register", reg.Handlers.AuthHandler.Register)
 			auth.POST("/login", reg.Handlers.AuthHandler.Login)
@@ -55,7 +47,6 @@ func RegisterRoutes(router *gin.Engine, reg *registry.AppRegistry) {
 
 		// Protected user endpoints
 		users := api.Group("/users")
-		users.Use(middleware.RateLimitMiddleware(reg.Redis, rateLimitConfigs["api"]))
 		users.Use(middleware.AuthMiddleware(reg.Auth, reg.Redis))
 		{
 			users.POST("/", reg.Handlers.UserHandler.Create)

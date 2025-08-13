@@ -19,7 +19,7 @@ type SecurityConfig struct {
 // DefaultSecurityConfig returns default security configuration
 func DefaultSecurityConfig() SecurityConfig {
 	return SecurityConfig{
-		ContentSecurityPolicy:     "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; media-src 'self'; object-src 'none'; child-src 'none'; worker-src 'none'; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; manifest-src 'self'",
+		ContentSecurityPolicy:     "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; media-src 'self'; object-src 'none'; child-src 'none'; worker-src 'none'; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; manifest-src 'self'",
 		ReferrerPolicy:            "strict-origin-when-cross-origin",
 		PermissionsPolicy:         "camera=(), microphone=(), geolocation=(), interest-cohort=()",
 		CrossOriginEmbedderPolicy: "require-corp",
@@ -84,22 +84,25 @@ func CORSMiddleware(allowedOrigins []string, allowCredentials bool) gin.HandlerF
 			}
 		}
 
-		if !allowed && len(allowedOrigins) > 0 {
-			c.Header("Access-Control-Allow-Origin", allowedOrigins[0])
-		}
+		// Only set CORS headers for allowed origins
+		if allowed {
+			c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, X-Request-Id")
+			c.Header("Access-Control-Expose-Headers", "Content-Length, X-Request-Id, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset")
+			c.Header("Access-Control-Max-Age", "86400") // 24 hours
 
-		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, X-Request-Id")
-		c.Header("Access-Control-Expose-Headers", "Content-Length, X-Request-Id, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset")
-		c.Header("Access-Control-Max-Age", "86400") // 24 hours
-
-		if allowCredentials {
-			c.Header("Access-Control-Allow-Credentials", "true")
+			if allowCredentials {
+				c.Header("Access-Control-Allow-Credentials", "true")
+			}
 		}
 
 		// Handle preflight requests
 		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(204)
+			if allowed {
+				c.AbortWithStatus(204)
+			} else {
+				c.AbortWithStatus(403) // Forbidden for non-allowed origins
+			}
 			return
 		}
 

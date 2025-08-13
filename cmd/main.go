@@ -67,6 +67,7 @@ func main() {
 
 	r := gin.New()
 	r.Use(middleware.RequestIDMiddleware(logger.Global))
+	r.Use(gin.Logger()) // Add Gin logger for HTTP request logs
 	r.Use(gin.Recovery())
 
 	// Register routes

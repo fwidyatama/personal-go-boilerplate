@@ -18,7 +18,7 @@ BINARY_UNIX := $(BINARY_NAME)_unix
 DB_HOST ?= localhost
 DB_PORT ?= 5432
 DB_USER ?= postgres
-DB_PASSWORD ?= password
+DB_PASSWORD ?= postgres
 DB_NAME ?= microservice_db
 DB_SSLMODE ?= disable
 
@@ -51,6 +51,7 @@ clean:
 test:
 	@echo "Running tests..."
 	$(GOTEST) -v ./...
+
 
 # Run tests with coverage
 coverage:
@@ -124,6 +125,8 @@ install-tools:
 	go install github.com/air-verse/air@latest
 	go install github.com/pressly/goose/v3/cmd/goose@latest
 	go install github.com/swaggo/swag/cmd/swag@latest
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	go install github.com/securecodewarrior/sast-scan@latest
 
 # Generate Swagger documentation
 swagger:
@@ -167,10 +170,6 @@ health:
 	@echo "Checking application health..."
 	curl -f http://localhost:8080/api/v1/health || echo "Application is not healthy"
 
-# Load test (requires hey)
-load-test:
-	@echo "Running load test..."
-	hey -n 1000 -c 10 http://localhost:8080/api/v1/health
 
 # Show help
 help:

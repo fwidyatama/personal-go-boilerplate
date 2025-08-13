@@ -69,7 +69,7 @@ var _ = Describe("AuthHandler", func() {
 			registerRequest = types.RegisterRequest{
 				Name:     "John Doe",
 				Email:    "john@example.com",
-				Password: "password123",
+				Password: "Password123!",
 			}
 		})
 
@@ -228,7 +228,7 @@ var _ = Describe("AuthHandler", func() {
 		BeforeEach(func() {
 			loginRequest = types.LoginRequest{
 				Email:    "john@example.com",
-				Password: "password123",
+				Password: "Password123!",
 			}
 		})
 
@@ -632,7 +632,7 @@ var _ = Describe("AuthHandler", func() {
 			resetPasswordRequest = types.ResetPasswordRequest{
 				Email:       "john@example.com",
 				Token:       "reset_token_123",
-				NewPassword: "newpassword123",
+				NewPassword: "NewPassword123!",
 			}
 		})
 
@@ -723,8 +723,8 @@ var _ = Describe("AuthHandler", func() {
 
 		BeforeEach(func() {
 			changePasswordRequest = types.ChangePasswordRequest{
-				CurrentPassword: "oldpassword123",
-				NewPassword:     "newpassword123",
+				CurrentPassword: "OldPassword123!",
+				NewPassword:     "NewPassword123!",
 			}
 		})
 

@@ -7,6 +7,7 @@ import (
 	"context"
 	"go-boilerplate/pkg/redis"
 	"sync"
+	"time"
 )
 
 // Ensure, that RedisClientMock does implement redis.RedisClient.
@@ -28,6 +29,9 @@ var _ redis.RedisClient = &RedisClientMock{}
 //			SetFunc: func(ctx context.Context, key string, value interface{}, ttl int) error {
 //				panic("mock out the Set method")
 //			},
+//			TTLFunc: func(ctx context.Context, key string) (time.Duration, error) {
+//				panic("mock out the TTL method")
+//			},
 //		}
 //
 //		// use mockedRedisClient in code that requires redis.RedisClient
@@ -43,6 +47,9 @@ type RedisClientMock struct {
 
 	// SetFunc mocks the Set method.
 	SetFunc func(ctx context.Context, key string, value interface{}, ttl int) error
+
+	// TTLFunc mocks the TTL method.
+	TTLFunc func(ctx context.Context, key string) (time.Duration, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -71,10 +78,18 @@ type RedisClientMock struct {
 			// TTL is the ttl argument value.
 			TTL int
 		}
+		// TTL holds details about calls to the TTL method.
+		TTL []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Key is the key argument value.
+			Key string
+		}
 	}
 	lockDel sync.RWMutex
 	lockGet sync.RWMutex
 	lockSet sync.RWMutex
+	lockTTL sync.RWMutex
 }
 
 // Del calls DelFunc.
@@ -190,5 +205,41 @@ func (mock *RedisClientMock) SetCalls() []struct {
 	mock.lockSet.RLock()
 	calls = mock.calls.Set
 	mock.lockSet.RUnlock()
+	return calls
+}
+
+// TTL calls TTLFunc.
+func (mock *RedisClientMock) TTL(ctx context.Context, key string) (time.Duration, error) {
+	if mock.TTLFunc == nil {
+		panic("RedisClientMock.TTLFunc: method is nil but RedisClient.TTL was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Key string
+	}{
+		Ctx: ctx,
+		Key: key,
+	}
+	mock.lockTTL.Lock()
+	mock.calls.TTL = append(mock.calls.TTL, callInfo)
+	mock.lockTTL.Unlock()
+	return mock.TTLFunc(ctx, key)
+}
+
+// TTLCalls gets all the calls that were made to TTL.
+// Check the length with:
+//
+//	len(mockedRedisClient.TTLCalls())
+func (mock *RedisClientMock) TTLCalls() []struct {
+	Ctx context.Context
+	Key string
+} {
+	var calls []struct {
+		Ctx context.Context
+		Key string
+	}
+	mock.lockTTL.RLock()
+	calls = mock.calls.TTL
+	mock.lockTTL.RUnlock()
 	return calls
 }

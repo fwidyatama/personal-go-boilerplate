@@ -61,7 +61,7 @@ var _ = Describe("UserHandler", func() {
 			createRequest = types.CreateUserRequest{
 				Name:     "John Doe",
 				Email:    "john@example.com",
-				Password: "password123",
+				Password: "Password123!",
 			}
 		})
 
@@ -426,7 +426,7 @@ var _ = Describe("UserHandler", func() {
 			updateRequest = types.UpdateUserRequest{
 				Name:     "John Updated",
 				Email:    "john.updated@example.com",
-				Password: "newpassword123",
+				Password: "NewPassword123!",
 			}
 		})
 

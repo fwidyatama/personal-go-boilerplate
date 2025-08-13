@@ -12,6 +12,7 @@ type RedisClient interface {
 	Set(ctx context.Context, key string, value interface{}, ttl int) error
 	Get(ctx context.Context, key string) (string, error)
 	Del(ctx context.Context, key string) error
+	TTL(ctx context.Context, key string) (time.Duration, error)
 }
 
 type RedisAdapter struct {
@@ -35,4 +36,7 @@ func (r *RedisAdapter) Get(ctx context.Context, key string) (string, error) {
 }
 func (r *RedisAdapter) Del(ctx context.Context, key string) error {
 	return r.client.Del(ctx, key).Err()
+}
+func (r *RedisAdapter) TTL(ctx context.Context, key string) (time.Duration, error) {
+	return r.client.TTL(ctx, key).Result()
 }

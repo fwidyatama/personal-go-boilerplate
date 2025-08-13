@@ -7,6 +7,7 @@ import (
 	"context"
 	"go-boilerplate/pkg/redis"
 	"sync"
+	"time"
 )
 
 // Ensure, that RedisClientMock does implement redis.RedisClient.
@@ -22,11 +23,20 @@ var _ redis.RedisClient = &RedisClientMock{}
 //			DelFunc: func(ctx context.Context, key string) error {
 //				panic("mock out the Del method")
 //			},
+//			ExpireFunc: func(ctx context.Context, key string, ttl int) error {
+//				panic("mock out the Expire method")
+//			},
 //			GetFunc: func(ctx context.Context, key string) (string, error) {
 //				panic("mock out the Get method")
 //			},
+//			IncrFunc: func(ctx context.Context, key string) (int64, error) {
+//				panic("mock out the Incr method")
+//			},
 //			SetFunc: func(ctx context.Context, key string, value interface{}, ttl int) error {
 //				panic("mock out the Set method")
+//			},
+//			TTLFunc: func(ctx context.Context, key string) (time.Duration, error) {
+//				panic("mock out the TTL method")
 //			},
 //		}
 //
@@ -38,11 +48,20 @@ type RedisClientMock struct {
 	// DelFunc mocks the Del method.
 	DelFunc func(ctx context.Context, key string) error
 
+	// ExpireFunc mocks the Expire method.
+	ExpireFunc func(ctx context.Context, key string, ttl int) error
+
 	// GetFunc mocks the Get method.
 	GetFunc func(ctx context.Context, key string) (string, error)
 
+	// IncrFunc mocks the Incr method.
+	IncrFunc func(ctx context.Context, key string) (int64, error)
+
 	// SetFunc mocks the Set method.
 	SetFunc func(ctx context.Context, key string, value interface{}, ttl int) error
+
+	// TTLFunc mocks the TTL method.
+	TTLFunc func(ctx context.Context, key string) (time.Duration, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -53,8 +72,24 @@ type RedisClientMock struct {
 			// Key is the key argument value.
 			Key string
 		}
+		// Expire holds details about calls to the Expire method.
+		Expire []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Key is the key argument value.
+			Key string
+			// TTL is the ttl argument value.
+			TTL int
+		}
 		// Get holds details about calls to the Get method.
 		Get []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Key is the key argument value.
+			Key string
+		}
+		// Incr holds details about calls to the Incr method.
+		Incr []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// Key is the key argument value.
@@ -71,10 +106,20 @@ type RedisClientMock struct {
 			// TTL is the ttl argument value.
 			TTL int
 		}
+		// TTL holds details about calls to the TTL method.
+		TTL []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// Key is the key argument value.
+			Key string
+		}
 	}
-	lockDel sync.RWMutex
-	lockGet sync.RWMutex
-	lockSet sync.RWMutex
+	lockDel    sync.RWMutex
+	lockExpire sync.RWMutex
+	lockGet    sync.RWMutex
+	lockIncr   sync.RWMutex
+	lockSet    sync.RWMutex
+	lockTTL    sync.RWMutex
 }
 
 // Del calls DelFunc.
@@ -113,6 +158,46 @@ func (mock *RedisClientMock) DelCalls() []struct {
 	return calls
 }
 
+// Expire calls ExpireFunc.
+func (mock *RedisClientMock) Expire(ctx context.Context, key string, ttl int) error {
+	if mock.ExpireFunc == nil {
+		panic("RedisClientMock.ExpireFunc: method is nil but RedisClient.Expire was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Key string
+		TTL int
+	}{
+		Ctx: ctx,
+		Key: key,
+		TTL: ttl,
+	}
+	mock.lockExpire.Lock()
+	mock.calls.Expire = append(mock.calls.Expire, callInfo)
+	mock.lockExpire.Unlock()
+	return mock.ExpireFunc(ctx, key, ttl)
+}
+
+// ExpireCalls gets all the calls that were made to Expire.
+// Check the length with:
+//
+//	len(mockedRedisClient.ExpireCalls())
+func (mock *RedisClientMock) ExpireCalls() []struct {
+	Ctx context.Context
+	Key string
+	TTL int
+} {
+	var calls []struct {
+		Ctx context.Context
+		Key string
+		TTL int
+	}
+	mock.lockExpire.RLock()
+	calls = mock.calls.Expire
+	mock.lockExpire.RUnlock()
+	return calls
+}
+
 // Get calls GetFunc.
 func (mock *RedisClientMock) Get(ctx context.Context, key string) (string, error) {
 	if mock.GetFunc == nil {
@@ -146,6 +231,42 @@ func (mock *RedisClientMock) GetCalls() []struct {
 	mock.lockGet.RLock()
 	calls = mock.calls.Get
 	mock.lockGet.RUnlock()
+	return calls
+}
+
+// Incr calls IncrFunc.
+func (mock *RedisClientMock) Incr(ctx context.Context, key string) (int64, error) {
+	if mock.IncrFunc == nil {
+		panic("RedisClientMock.IncrFunc: method is nil but RedisClient.Incr was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Key string
+	}{
+		Ctx: ctx,
+		Key: key,
+	}
+	mock.lockIncr.Lock()
+	mock.calls.Incr = append(mock.calls.Incr, callInfo)
+	mock.lockIncr.Unlock()
+	return mock.IncrFunc(ctx, key)
+}
+
+// IncrCalls gets all the calls that were made to Incr.
+// Check the length with:
+//
+//	len(mockedRedisClient.IncrCalls())
+func (mock *RedisClientMock) IncrCalls() []struct {
+	Ctx context.Context
+	Key string
+} {
+	var calls []struct {
+		Ctx context.Context
+		Key string
+	}
+	mock.lockIncr.RLock()
+	calls = mock.calls.Incr
+	mock.lockIncr.RUnlock()
 	return calls
 }
 
@@ -190,5 +311,41 @@ func (mock *RedisClientMock) SetCalls() []struct {
 	mock.lockSet.RLock()
 	calls = mock.calls.Set
 	mock.lockSet.RUnlock()
+	return calls
+}
+
+// TTL calls TTLFunc.
+func (mock *RedisClientMock) TTL(ctx context.Context, key string) (time.Duration, error) {
+	if mock.TTLFunc == nil {
+		panic("RedisClientMock.TTLFunc: method is nil but RedisClient.TTL was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		Key string
+	}{
+		Ctx: ctx,
+		Key: key,
+	}
+	mock.lockTTL.Lock()
+	mock.calls.TTL = append(mock.calls.TTL, callInfo)
+	mock.lockTTL.Unlock()
+	return mock.TTLFunc(ctx, key)
+}
+
+// TTLCalls gets all the calls that were made to TTL.
+// Check the length with:
+//
+//	len(mockedRedisClient.TTLCalls())
+func (mock *RedisClientMock) TTLCalls() []struct {
+	Ctx context.Context
+	Key string
+} {
+	var calls []struct {
+		Ctx context.Context
+		Key string
+	}
+	mock.lockTTL.RLock()
+	calls = mock.calls.TTL
+	mock.lockTTL.RUnlock()
 	return calls
 }

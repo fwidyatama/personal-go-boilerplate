@@ -7,6 +7,7 @@ import (
 	"go-boilerplate/internal/domain"
 	"go-boilerplate/internal/formatter"
 	"go-boilerplate/internal/types"
+	"go-boilerplate/internal/validator"
 
 	"go-boilerplate/pkg/logger"
 
@@ -18,12 +19,14 @@ import (
 // UserHandler handles HTTP requests for user operations
 type UserHandler struct {
 	userUseCase domain.UserUseCase
+	validator   *validator.Validator
 }
 
 // NewUserHandler creates a new user handler
 func NewUserHandler(userUseCase domain.UserUseCase) *UserHandler {
 	return &UserHandler{
 		userUseCase: userUseCase,
+		validator:   validator.NewValidator(),
 	}
 }
 
@@ -32,6 +35,13 @@ func (h *UserHandler) Create(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		logger.WithRequestIDLogger(c.Request.Context()).Errorf("Failed to bind request: %v", err)
 		formatter.Error(c, http.StatusBadRequest, "Invalid request body", "Bad Request")
+		return
+	}
+
+	// Validate request
+	if validationErrors := h.validator.ValidateCreateUserRequest(req.Name, string(req.Email), req.Password); len(validationErrors) > 0 {
+		logger.WithRequestIDLogger(c.Request.Context()).Errorf("Validation failed: %v", validationErrors)
+		formatter.Error(c, http.StatusBadRequest, validationErrors.Error(), "Validation Failed")
 		return
 	}
 
@@ -121,6 +131,13 @@ func (h *UserHandler) Update(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		logger.WithRequestIDLogger(c.Request.Context()).Errorf("Failed to bind request: %v", err)
 		formatter.Error(c, http.StatusBadRequest, "Invalid request body", "Bad Request")
+		return
+	}
+
+	// Validate request
+	if validationErrors := h.validator.ValidateUpdateUserRequest(req.Name, string(req.Email), req.Password); len(validationErrors) > 0 {
+		logger.WithRequestIDLogger(c.Request.Context()).Errorf("Validation failed: %v", validationErrors)
+		formatter.Error(c, http.StatusBadRequest, validationErrors.Error(), "Validation Failed")
 		return
 	}
 

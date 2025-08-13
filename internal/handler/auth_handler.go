@@ -4,6 +4,7 @@ import (
 	"go-boilerplate/internal/domain"
 	"go-boilerplate/internal/formatter"
 	"go-boilerplate/internal/types"
+	"go-boilerplate/internal/validator"
 	"go-boilerplate/pkg/logger"
 	"net/http"
 
@@ -15,12 +16,14 @@ import (
 // AuthHandler handles authentication requests
 type AuthHandler struct {
 	authUseCase domain.AuthUseCase
+	validator   *validator.Validator
 }
 
 // NewAuthHandler creates a new authentication handler
 func NewAuthHandler(authUseCase domain.AuthUseCase) *AuthHandler {
 	return &AuthHandler{
 		authUseCase: authUseCase,
+		validator:   validator.NewValidator(),
 	}
 }
 
@@ -29,6 +32,13 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		logger.WithRequestIDLogger(c.Request.Context()).Errorf("Failed to bind request: %v", err)
 		formatter.Error(c, http.StatusBadRequest, "Invalid request body", "Bad Request")
+		return
+	}
+
+	// Validate request
+	if validationErrors := h.validator.ValidateCreateUserRequest(req.Name, string(req.Email), req.Password); len(validationErrors) > 0 {
+		logger.WithRequestIDLogger(c.Request.Context()).Errorf("Validation failed: %v", validationErrors)
+		formatter.Error(c, http.StatusBadRequest, validationErrors.Error(), "Validation Failed")
 		return
 	}
 
@@ -69,6 +79,13 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		logger.WithRequestIDLogger(c.Request.Context()).Errorf("Failed to bind request: %v", err)
 		formatter.Error(c, http.StatusBadRequest, "Invalid request body", "Bad Request")
+		return
+	}
+
+	// Validate request
+	if validationErrors := h.validator.ValidateLoginRequest(string(req.Email), req.Password); len(validationErrors) > 0 {
+		logger.WithRequestIDLogger(c.Request.Context()).Errorf("Validation failed: %v", validationErrors)
+		formatter.Error(c, http.StatusBadRequest, validationErrors.Error(), "Validation Failed")
 		return
 	}
 
@@ -187,6 +204,13 @@ func (h *AuthHandler) ChangePassword(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		logger.WithRequestIDLogger(c.Request.Context()).Errorf("Failed to bind request: %v", err)
 		formatter.Error(c, http.StatusBadRequest, "Invalid request body", "Bad Request")
+		return
+	}
+
+	// Validate request
+	if validationErrors := h.validator.ValidateChangePasswordRequest(req.CurrentPassword, req.NewPassword); len(validationErrors) > 0 {
+		logger.WithRequestIDLogger(c.Request.Context()).Errorf("Validation failed: %v", validationErrors)
+		formatter.Error(c, http.StatusBadRequest, validationErrors.Error(), "Validation Failed")
 		return
 	}
 

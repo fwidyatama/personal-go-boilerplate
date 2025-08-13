@@ -75,6 +75,7 @@ func Load() (*Config, error) {
 	if err := env.Parse(&config); err != nil {
 		return nil, fmt.Errorf("failed to parse env: %w", err)
 	}
+	fmt.Println(config)
 	return &config, nil
 }
 

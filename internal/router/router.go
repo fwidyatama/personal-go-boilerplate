@@ -9,12 +9,44 @@ import (
 )
 
 func RegisterRoutes(router *gin.Engine, reg *registry.AppRegistry) {
+	// Add security headers middleware
+	router.Use(middleware.SecurityHeadersMiddleware())
+
+	// Add CORS middleware
+	router.Use(middleware.CORSMiddleware([]string{"http://localhost:3000", "http://localhost:8080"}, true))
+
+	// Add request size limit (10MB)
+	router.Use(middleware.RequestSizeMiddleware(10 << 20))
+
 	router.Static("/swagger-ui/", "./swagger-ui")
 	router.StaticFile("/swagger/openapi.yaml", "./docs/openapi.yaml")
 
 	api := router.Group("/api/v1")
 	{
-		users := api.Group("	/users")
+		// Public endpoints
+		api.GET("/health", handler.HealthCheck(reg.DB))
+		api.GET("/metrics", handler.MetricsHandler())
+
+		// Auth endpoints
+		auth := api.Group("/auth")
+		{
+			auth.POST("/register", reg.Handlers.AuthHandler.Register)
+			auth.POST("/login", reg.Handlers.AuthHandler.Login)
+			auth.POST("/refresh", reg.Handlers.AuthHandler.Refresh)
+			auth.POST("/forgot-password", reg.Handlers.AuthHandler.ForgotPassword)
+			auth.POST("/reset-password", reg.Handlers.AuthHandler.ResetPassword)
+
+			// Authenticated auth endpoints
+			authProtected := auth.Group("/")
+			authProtected.Use(middleware.AuthMiddleware(reg.Auth, reg.Redis))
+			{
+				authProtected.POST("/logout", reg.Handlers.AuthHandler.Logout)
+				authProtected.PUT("/change-password", reg.Handlers.AuthHandler.ChangePassword)
+			}
+		}
+
+		// Protected user endpoints
+		users := api.Group("/users")
 		users.Use(middleware.AuthMiddleware(reg.Auth, reg.Redis))
 		{
 			users.POST("/", reg.Handlers.UserHandler.Create)
@@ -24,18 +56,5 @@ func RegisterRoutes(router *gin.Engine, reg *registry.AppRegistry) {
 			users.DELETE("/:id", reg.Handlers.UserHandler.Delete)
 			users.GET("/me", reg.Handlers.UserHandler.GetMe)
 		}
-		auth := api.Group("/auth")
-		{
-			auth.POST("/register", reg.Handlers.AuthHandler.Register)
-			auth.POST("/login", reg.Handlers.AuthHandler.Login)
-			auth.POST("/refresh", reg.Handlers.AuthHandler.Refresh)
-			auth.POST("/logout", reg.Handlers.AuthHandler.Logout)
-			auth.POST("/forgot-password", reg.Handlers.AuthHandler.ForgotPassword)
-			auth.POST("/reset-password", reg.Handlers.AuthHandler.ResetPassword)
-			auth.PUT("/change-password", reg.Handlers.AuthHandler.ChangePassword)
-		}
-
-		api.GET("/health", handler.HealthCheck(reg.DB))
-		api.GET("/metrics", handler.MetricsHandler())
 	}
 }
